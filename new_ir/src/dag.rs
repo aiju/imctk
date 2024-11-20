@@ -5,14 +5,14 @@ use std::{
 };
 
 use imctk_ids::id_vec::IdVec;
-use imctk_paged_storage::index::{IndexedCatalog, IndexedNodeRef, IndexedTerm};
+use imctk_paged_storage::index::{IndexedCatalog, IndexedNodeRef, IndexedTermRef};
 use imctk_union_find::{
     change_tracking::ObserverToken,
     tracked_union_find::{Change, Renumbering},
     Element,
 };
 
-use crate::egraph::{EgraphChange, EgraphMut, EgraphRef, EgraphRenumbering};
+use crate::{bitlevel::BitlevelTerm, egraph::{EgraphChange, EgraphMut, EgraphRef, EgraphRenumbering}};
 
 pub trait InsertionPolicy<C: IndexedCatalog> {
     fn on_insertion(dag: &mut IrDagCore<C>, egraph: &EgraphRef<C>, node_id: C::NodeId);
@@ -22,7 +22,8 @@ pub struct AlwaysInsert;
 
 impl<C: IndexedCatalog> InsertionPolicy<C> for AlwaysInsert {
     fn on_insertion(dag: &mut IrDagCore<C>, egraph: &EgraphRef<C>, node_id: C::NodeId) {
-        let _ = dag.try_add_node(egraph, node_id);
+        let result = dag.try_add_node(egraph, node_id);
+        println!("{result:?} {:?}", egraph.get::<C::NodeRef<'_>>(node_id));
     }
 }
 

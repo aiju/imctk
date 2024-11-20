@@ -17,17 +17,17 @@ pub struct AigerVar(pub Var);
 pub struct AigerLit(pub Lit);
 
 impl AigerVar {
-    const FALSE: AigerVar = AigerVar(Var::FALSE);
-    fn from_index(index: usize) -> Self {
+    pub const FALSE: AigerVar = AigerVar(Var::FALSE);
+    pub fn from_index(index: usize) -> Self {
         AigerVar(Var::from_index(index))
     }
 }
 
 impl AigerLit {
-    fn var(self) -> AigerVar {
+    pub fn var(self) -> AigerVar {
         AigerVar(self.0.var())
     }
-    fn lookup<T: imctk_lit::Negate>(self, f: impl FnOnce(AigerVar) -> T) -> T::Negated {
+    pub fn lookup<T: imctk_lit::Negate>(self, f: impl FnOnce(AigerVar) -> T) -> T::Negated {
         self.0.lookup(|var| f(AigerVar(var)))
     }
 }
@@ -109,6 +109,7 @@ impl AigerImporter {
                     init: init_lit,
                 }),
             });
+            println!("aiger reg {output_var:?} {aiger_latch:?} {next:?} {output:?}");
         }
 
         for aiger_and in aig.and_gates.iter() {
@@ -117,11 +118,13 @@ impl AigerImporter {
                 .inputs
                 .map(|lit| lit.lookup(|var| self.var_map[var].unwrap()));
             let term = BitlevelTerm::And(AndTerm(inputs.into()));
+            let term_dbg = term.clone();
             if let Some(lit) = self.var_map[output_aiger_var] {
                 egraph.insert_node(Node { output: lit, term });
             } else {
                 self.var_map[output_aiger_var] = Some(egraph.insert_term(term));
             }
+            println!("aiger {:?} {:?} {term_dbg:?} {:?}", output_aiger_var, aiger_and.inputs, self.var_map[output_aiger_var]);
         }
 
         IdVec::from_vec(
